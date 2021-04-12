@@ -1,1 +1,52 @@
 
+#include <Ubidots.h>
+#include <ESP8266WebServer.h> 
+#include <ESP8266WiFi.h> 
+#include <WiFiClient.h> 
+ 
+//Creacion del servidor para uso posterior  ESP8266WebServer server(80); 
+
+const char* UBIDOTS_TOKEN ="BBFF-uucfXUBjOMcyReiUNSJG426qnBA79Q"; //UBIDOTS TOKEN
+const char* WIFI_SSID ="TOTALPLAY_yeye"; //Wi-Fi SSID
+const char* WIFI_PASS ="Juegodetronos1"; //Wi-Fi password
+
+Ubidots ubidots (UBIDOTS_TOKEN); //crea el objeto ubidots 
+
+
+// LDR 
+const long A = 1000;     //Resistencia en oscuridad en KΩ
+const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
+const int Rc = 10;       //Resistencia calibracion en KΩ
+const int LDRPin = A0;   //Pin del LDR
+
+int V;                   //Constante V para la lectura analoga
+int ilum;                //Variable de almacenamiento para la lectura final
+
+void setup() {
+  
+ Serial.begin(9600);
+ ubidots.wifiConnect(WIFI_SSID, WIFI_PASS);       //Conectar wifi
+
+}
+
+void loop() {
+  
+   V = analogRead(LDRPin);                           //Lee el canal analogo y lo asigna a la variable V
+   ilum = ((long)(1024-V)*A*10)/((long)B*Rc*V);      //usar si LDR entre GND y A0 
+   //ilum = ((long)V*A*10)/((long)B*Rc*(1024-V));    //usar si LDR entre A0 y Vcc 
+  
+   Serial.println(ilum);                             //Imprime serialmente el valor de la variable iljum
+   delay(1000);
+   
+
+  ubidots.add("ilum", ilum); //Se asigna un nombre a la variable y se envía a ubidots
+
+  bool bufferSent = false;           
+  bufferSent = ubidots.send(); //Manda los datos a device ubidots si estos hacen match con el Id
+
+  if (bufferSent){
+    //Para validar si los datos si se estan enviando a ubidots
+    Serial.println("Values sent by the device");
+    }
+    delay(1000);  
+}
